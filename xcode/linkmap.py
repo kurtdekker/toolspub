@@ -50,7 +50,8 @@
 #######################################################################
 
 class	objfile:
-	def	__init__(self,name):
+	def	__init__(self,number,name):
+		self.number = number
 		self.name = name
 		self.size = 0
 		return
@@ -77,7 +78,7 @@ def	main(argv):
 		if m:
 			fileno = int(m.group(1))
 			payload = m.group(2)
-			objfiles[fileno] = objfile( payload)
+			objfiles[fileno] = objfile( fileno, payload)
 
 		lineno += 1
 
@@ -115,10 +116,10 @@ def	main(argv):
 	files.sort( key = lambda a: -a.size)
 
 	print
-	print "Size,ObjectFile"
+	print "Size,ObjFileNo,ObjectFileName"
 
 	for file in files:
-		print "%u,%s" % (file.size, file.name)
+		print "%u,%u,\"%s\"" % (file.size, file.number, file.name)
 
 	return
 
