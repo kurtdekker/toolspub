@@ -48,6 +48,29 @@
 #		find -f . | grep LinkMap
 #
 #######################################################################
+#
+# Objfiles that match these strings will be removed and put into
+# separate lists at printout time.
+#
+identified_sections = [
+	"libiPhone-lib.a",
+]
+
+# Any piece smaller than this number is not reported
+minimum_total_size = 10240
+
+def	read_additional_identified_sections_file(file):
+	try:
+		with open( file) as fpi:
+			for section in fpi.readlines():
+				section = section.rstrip()
+				if len(section) > 2:
+					if not section in identified_sections:
+						identified_sections.append(section)
+	except IOError:
+		print "Did not find identified_sections.txt file. Breaking it up by defaults."
+
+	return
 
 class	objfile:
 	def	__init__(self,number,name):
@@ -55,6 +78,8 @@ class	objfile:
 		self.name = name
 		self.size = 0
 		return
+	def	__repr__(self):
+		return "%u,%u,\"%s\"" % (self.size, self.number, self.name)
 
 def	main(argv):
 	import re
@@ -110,19 +135,60 @@ def	main(argv):
 		lineno += 1
 
 	print "Found %u objfiles." % len( objfiles)
+	print
 
 	files = [objfiles[x] for x in objfiles]
 
 	files.sort( key = lambda a: -a.size)
 
-	print
-	print "Size,ObjFileNo,ObjectFileName"
+	print "Filtering contributions on size must be larger than %u" % minimum_total_size
+	files = filter( lambda a: a.size >= minimum_total_size, files)
+
+	def	header():
+		print
+		print "Size,ObjFileNo,ObjectFileName"
+
+	header()
 
 	for file in files:
-		print "%u,%u,\"%s\"" % (file.size, file.number, file.name)
+		print file
+
+	print
+	print "Broken down by identified_sections:"
+	print
+
+	section_lists = dict()
+
+	commonkey = "(everything else)"
+
+	for file in files:
+		wasadded = None
+		for sectionkey in identified_sections:
+			if file.name.find( sectionkey) >= 0:
+				if not section_lists.has_key(sectionkey):
+					section_lists[sectionkey] = []
+				section_lists[sectionkey].append( file)
+				wasadded = 1
+				break
+		if not wasadded:
+			if not section_lists.has_key(commonkey):
+				section_lists[commonkey] = []
+			section_lists[commonkey].append( file)
+
+	for sectionkey in list(identified_sections) + [commonkey]:
+		if section_lists.has_key(sectionkey):
+			print
+			print "identified section '%s'" % sectionkey
+
+			header()
+
+			section = section_lists[sectionkey]
+			for piece in section:
+				print piece
 
 	return
 
 import os, sys
 if __name__ == "__main__":
+	read_additional_identified_sections_file( "identified_sections.txt") 
 	main(sys.argv)
