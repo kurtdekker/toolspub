@@ -177,12 +177,17 @@ def	main(argv):
 
 	for sectionkey in list(identified_sections) + [commonkey]:
 		if section_lists.has_key(sectionkey):
+			section = section_lists[sectionkey]
+
+			totalsize = 0
+			for piece in section:
+				totalsize += piece.size
+
 			print
-			print "identified section '%s'" % sectionkey
+			print "identified section '%s',total size: %u" % (sectionkey, totalsize)
 
 			header()
 
-			section = section_lists[sectionkey]
 			for piece in section:
 				print piece
 
